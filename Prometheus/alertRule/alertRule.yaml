@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: test-rule
+  namespace: monitoring
+data:
+  # ▼ Prometheusが読み込むアラートルールの設定ファイルです
+  instance-down.rules.yml: |
+    groups:
+      - name: test-alerts
+        rules:
+          - alert: InstanceDown
+            # up == 0（対象の監視ターゲットが落ちている状態）が1分間続いたら発火
+            expr: up == 1
+            for: 1m
+            labels:
+              severity: critical
+            annotations:
+              # 先ほど Alertmanager 側で設定した {{ .Annotations.summary }} 達にマッピングされます
+              summary: "ターゲット（インスタンス）のダウンを検知しました"
+              description: "監視対象 {{ $labels.instance }} の Job [{{ $labels.job }}] に接続できません。"

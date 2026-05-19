@@ -1,0 +1,25 @@
+global:
+  slack_api_url: 'https://hooks.slack.com/services/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'
+
+route:
+  receiver: 'slack-notifications'
+
+receivers:
+- name: 'slack-notifications'
+  slack_configs:
+  - channel: '#all-alertpromsupport'
+    send_resolved: true # アラート解決時（復旧時）にも通知を送る設定（推奨）
+    
+    # ▼ タイトル： [FIRING:1] アラート名 のような形式になります
+    title: '[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }}'
+    
+    # ▼ 本文： アラートの詳細やラベルをループして箇条書きで表示します
+    text: >-
+      {{ range .Alerts }}
+        *🚨 アラート:* {{ .Annotations.summary }}
+        *📝 詳細:* {{ .Annotations.description }}
+        *🏷️ ラベル情報:*
+        {{ range .Labels.SortedPairs }} • *{{ .Name }}:* `{{ .Value }}`
+        {{ end }}
+        ---
+      {{ end }}

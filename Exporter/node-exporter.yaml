@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: prometheus-node-exporter
+  namespace: monitoring
+spec:
+  selector:
+    matchLabels:
+      app: node-exporter
+  template:
+    metadata:
+      labels:
+        app: node-exporter
+    spec:
+      containers:
+      - name: node-exporter
+        image: quay.io/prometheus/node-exporter:v1.2.2
+        args:
+        - --path.rootfs=/
+        - --collector.filesystem  # ファイルシステムのコレクタを有効化
+        - --collector.filesystem.mount-points-exclude="^/(var/lib/docker|overlay|containers)"  # こちらを使用
+        - --collector.textfile.directory=/var/lib/node_exporter/textfile_collector
+        ports:
+        - name: http-metrics
+          containerPort: 9100
+        resources:  # リソースの指定
+          requests:
+            memory: "50Mi"
+            cpu: "100m"
+          limits:
+            memory: "200Mi"
+            cpu: "500m"
+        volumeMounts:
+        - name: proc
+          mountPath: /host/proc
+          readOnly: true
+        - name: sys
+          mountPath: /host/sys
+          readOnly: true
+        - name: rootfs
+          mountPath: /mnt
+          readOnly: true
+      volumes:
+      - name: proc
+        hostPath:
+          path: /proc
+      - name: sys
+        hostPath:
+          path: /sys
+      - name: rootfs
+        hostPath:
+          path: /mnt
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus-node-exporter
+  namespace: monitoring
+  labels:
+    app: prometheus-node-exporter
+spec:
+  type: ClusterIP  # 仮想IP（Cluster IP）を持つ標準のServiceタイプを指定
+  ports:
+    - name: metrics
+      port: 9100
+      protocol: TCP
+      targetPort: 9100
+  selector:
+    # 現在動いているNode ExporterのPodのラベルに一致させてください
+    app: node-exporter

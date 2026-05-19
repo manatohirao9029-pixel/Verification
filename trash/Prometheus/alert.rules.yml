@@ -1,0 +1,12 @@
+groups:
+  - name: test-alert
+    rules:
+      - alert: AlwaysFiringTestAlert
+        # ▼ ここが魔法の言葉です。常に「1」というデータを返すため、必ずアラート条件を満たします。
+        expr: vector(1)
+        for: 10s # 10秒間継続したらアラートを発火（すぐに発火します）
+        labels:
+          severity: critical
+        annotations:
+          summary: "【テスト】常時発火アラート"
+          description: "このアラートが見えていれば、PrometheusとAlertmanagerの連携は完璧です！"

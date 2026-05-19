@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus
+  namespace: monitoring
+spec:
+  selector:
+    app: prometheus
+  type: NodePort
+  ports:
+    - name: prometheus
+      protocol: TCP
+      port: 9090
+      nodePort: 30900
+    # - name: grpc
+    #   protocol: TCP
+    #   port: 10901
+    #   nodePort: 30030   # 任意の空いている NodePort に変更してください

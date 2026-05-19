@@ -1,0 +1,93 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus
+  namespace: monitoring
+  labels:
+    app: prometheus
+spec:
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app: prometheus
+  template:
+    metadata:
+      labels:
+        app: prometheus
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+    spec:
+      securityContext:
+        fsGroup: 65534   # PVの書き込み権限エラーを防ぐための設定
+      initContainers:
+      - name: init-chown-data
+        image: busybox
+        command: ["sh", "-c", "chmod -R 777 /prometheus"]
+        volumeMounts:
+        - name: data
+          mountPath: /prometheus
+      containers:
+      - name: prometheus
+        image: quay.io/prometheus/prometheus:v2.53.1
+        imagePullPolicy: IfNotPresent
+        args:
+          - '--storage.tsdb.path=/prometheus'
+          - '--config.file=/etc/prometheus/prometheus.yml'
+          - '--web.enable-admin-api'
+          - '--storage.tsdb.retention.time=31d'
+        ports:
+        - name: web
+          containerPort: 9090
+        volumeMounts:
+        - name: config-volume
+          mountPath: /etc/prometheus
+        - name: data
+          mountPath: /prometheus
+        - name: rules-volume
+          mountPath: /etc/prometheus/rules
+          
+      restartPolicy: Always
+      volumes:
+      - name: config-volume
+        configMap:
+          name: prometheus-config
+      - name: data
+        persistentVolumeClaim:
+          claimName: prometheus-pvc
+      - name: rules-volume
+        projected:
+          sources:
+          - configMap:
+              name: test-rule
+      #     - configMap:
+      #         name: swich-rule
+      #     - configMap:
+      #         name: firewall-rule
+      #     - configMap:
+      #         name: nas-rule
+      #     - configMap:
+      #         name: esxi-rule
+      #     - configMap:
+      #         name: archive-server-rule
+      #     - configMap:
+      #         name: openvpn-rule
+      #     - configMap:
+      #         name: core-server-rule
+      #     - configMap:
+      #         name: doktor-prob-server-rule
+      #     - configMap:
+      #         name: esxi-rule-iris
+      #     - configMap:
+      #         name: esxi-backup-rule
+      #     - configMap:
+      #         name: lidar-server-rule 
+      #     - configMap:
+      #         name: monitoring-cluster-rule
+      #     - configMap:
+      #         name: logserver-rule

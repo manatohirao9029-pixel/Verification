@@ -1,0 +1,21 @@
+global:
+  scrape_interval: 15s
+
+alerting:
+  alertmanagers:
+  - static_configs:
+    - targets:
+      - host.docker.internal:9093 #Dockerを使っているためこの設定にしている．
+
+rule_files:
+  - "alert.rules.yml"
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090'] # これはPrometheus自身なのでlocalhostでOK
+
+  - job_name: 'my-node-exporter'
+    static_configs:
+      # ここを「localhost」から「コンテナ名」に変更します
+      - targets: ['host.docker.internal:9100'] #Dockerを使っているため指定の仕方が特殊
