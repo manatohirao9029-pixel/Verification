@@ -1,0 +1,5 @@
+CREATE TABLE IF NOT EXISTS weight_entries (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    date DATE NOT NULL,
+    weight FLOAT NOT NULL
+);
