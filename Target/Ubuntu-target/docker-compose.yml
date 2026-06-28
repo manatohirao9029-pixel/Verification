@@ -1,0 +1,17 @@
+services:
+  dev-env:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dev-env-container
+    ports:
+      - "2222:22"     # SSH
+      - "8080:8080"   # Web/API
+      - "443:443"     # HTTPS
+      - "5173:5173"   # Vite等
+      - "9100:9100"   # Metrics等
+    volumes:
+      # ホストの現在のディレクトリをコンテナの /workspace にマウントします
+      # （必要に応じて変更してください）
+      - .:/workspace
+    restart: unless-stopped
